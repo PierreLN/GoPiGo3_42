@@ -18,13 +18,17 @@ class State:
 
     """ ACCESSEURS """
 
-    """ State est valide selon 1 critère
+    """ State est valide selon 2 critères
+    * existe-il au moins 1 transition ?
     * est-ce que chacune des transitions listées est valide ?
     """
 
     @property
     def is_valid(self) -> bool:
-        # critère 000 : chaque transition doit être considérée comme étant valide
+        # critère 001 : ANNULÉ PAR LE PROF
+        #if len(self.__transitions) < 1 and not self.is_terminal:
+        #    raise Exception("Il faut au moins une transition à un état qui n'est pas terminal.")
+        # critère 002
         for t in self.__transitions:
             if not t.is_valid:
                 raise Exception("Une des transitions est invalide. Peut-être qu'il manque la condition.")

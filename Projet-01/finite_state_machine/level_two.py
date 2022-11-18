@@ -1,9 +1,8 @@
 from mimetypes import init
 from level_one import *
 from abc import ABC, abstractmethod
-from time import perf_counter
+from time import perf_counter, sleep
 from typing import List
-
 
 """ LEVEL 02 : STATE """
 
@@ -135,10 +134,14 @@ class MonitoredState(ActionState):
         self.entry_count: int = 0
 
     def _exec_entering_action(self):
-        self._do_entering_action()
+        self.entry_count += 1
+        self.last_entry_time = perf_counter()
+        super()._exec_entering_action()
 
     def _exec_exiting_action(self):
-        self._do_exiting_action
+        super()._exec_exiting_action()
+        self.last_exit_time = perf_counter()
+        
 
 
 #########################
@@ -373,7 +376,7 @@ class AnyCondition(ManyConditions):
 ''' MonitoredStateCondition '''
 
 
-class MonitoredStateCondition(Condition):
+class MonitoredStateCondition(Condition, ABC):
     def __init__(self, monitored_state: MonitoredState, inverse: bool = False):
         super().__init__(inverse)
         if isinstance(monitored_state, MonitoredState):
@@ -404,7 +407,6 @@ class StateEntryDurationCondition(MonitoredStateCondition):
         ''' le temps requis à passer dans un certain State avant de déclencher transition vers le prochain State '''
         self.__duration: float = duration
         self.__inverse: bool = inverse
-        self._monitored_state.last_entry_time = perf_counter()  # secondes
 
     """ ACCESSEURS """
 
@@ -412,24 +414,24 @@ class StateEntryDurationCondition(MonitoredStateCondition):
     def duration(self) -> float:
         return self.__duration
 
-    @property
-    def perf_counter(self) -> float:
-        return perf_counter() - self.__elapsedTime
+
     """ MUTATEURS """
 
     @duration.setter
     def duration(self, new_duration: float):
-        if not isinstance(new_duration, float):
+        if type(new_duration) is float:
+            self.__duration = new_duration
+        else:
             raise TypeError("Le paramètre doit être typé 'float'.")
-        self.__duration = new_duration
 
     """ MÉTHODES """
 
     ''' inverse géré implicitement par magic function __call__ de la classe Condition '''
-    ''' condition véritable lorsque temps passé dans un State à quitter dépasse le temps requis avant de transiger '''
+    ''' condition véritable lorsque le State a dépassé le temps d'activité minimal et requis avant la transition '''
 
     def _compare(self) -> bool:
-        return perf_counter() - self._monitored_state.last_entry_time >= self.__duration
+        timer = perf_counter() - self._monitored_state.last_entry_time # MonitorState
+        return timer > self.__duration
 
 
 class StateEntryCountCondition(MonitoredStateCondition):
