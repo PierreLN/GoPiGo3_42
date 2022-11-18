@@ -1,0 +1,6 @@
+        self.t_blink_begin_0 = ConditionalTransition(StateValueCondition(.0, MonitoredState()))
+        self.t_blink_begin_1 = ConditionalTransition(StateValueCondition(.0, MonitoredState()))
+        self.t_blink_begin_0.next_state(self.blink_off)
+        self.t_blink_begin_1.next_state(self.blink_on)
+        self.blink_begin.add_transition(self.t_blink_begin_0)
+        self.blink_begin.add_transition(self.t_blink_begin_1)
