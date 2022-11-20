@@ -227,7 +227,8 @@ class FiniteStateMachine:
 
     def transit_to(self, state: State):
         self.__current_applicative_state = state
-
+        self.current_applicative_state._exec_entering_action()
+        
     def track(self) -> bool:
         # logique de fait un pas de calcul et validation de transition et appel de fonctions
         if self.__current_operational_state != FiniteStateMachine.OperationState.TERMINAL_REACHED:
