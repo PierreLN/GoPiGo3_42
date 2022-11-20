@@ -695,6 +695,6 @@ if __name__ == '__main__':
     # test_five()
     # test_six()
     # test_seven()
-    # test_eight()
+    test_eight()
     # test_nine()
-    test_ten()
+    # test_ten()

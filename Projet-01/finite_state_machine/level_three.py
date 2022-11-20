@@ -13,6 +13,7 @@ class TextStateGenerator():
     def __call__(self) -> MonitoredState:
         state = MonitoredState()
         state.add_entering_action(lambda :print(self.__text_in))
+        # state.add_in_state_action(lambda: print("in state"))
         state.add_exiting_action(lambda :print(self.__text_out))
         return state
 
@@ -25,13 +26,13 @@ class Blinker(FiniteStateMachine):
 
         ''' on_duration (inscription de la Transition; initialement, la duration est 0.0 - définie dans turn_on_1()) '''
         self.__on_duration = state_generator()
-        self.t_on_duration = ConditionalTransition(StateEntryDurationCondition(.0, self.__on))
+        self.t_on_duration = ConditionalTransition(StateEntryDurationCondition(.0, self.__on_duration))
         self.t_on_duration.next_state = self.__off
         self.__on_duration.add_transition(self.t_on_duration)
 
         ''' off_duration (semblable à on_duration) '''
         self.__off_duration = state_generator()
-        self.t_off_duration = ConditionalTransition(StateEntryDurationCondition(.0, self.__off))
+        self.t_off_duration = ConditionalTransition(StateEntryDurationCondition(.0, self.__off_duration))
         self.t_off_duration.next_state = self.__on
         self.__off_duration.add_transition(self.t_off_duration)
         # initialiser une Transition
@@ -41,42 +42,45 @@ class Blinker(FiniteStateMachine):
 
         ''' blink_1'''
         self.__blink_begin = MonitoredState()
+        self.__blink_begin.custom_value = .0
         self.__blink_off = state_generator()
         self.__blink_on = state_generator()
 
-        self.t_blink_begin_0 = ConditionalTransition(StateValueCondition(.0, MonitoredState()))
-        self.t_blink_begin_1 = ConditionalTransition(StateValueCondition(.0, MonitoredState()))
+        self.t_blink_begin_0 = ConditionalTransition(StateValueCondition(.0, self.__blink_begin))
+        self.t_blink_begin_1 = ConditionalTransition(StateValueCondition(.0, self.__blink_begin))
         self.t_blink_begin_0.next_state = self.__blink_off
         self.t_blink_begin_1.next_state = self.__blink_on
         self.__blink_begin.add_transition(self.t_blink_begin_0)
         self.__blink_begin.add_transition(self.t_blink_begin_1)
 
-        self.t_blink_off = ConditionalTransition(StateEntryDurationCondition(.0, MonitoredState()))
+        self.t_blink_off = ConditionalTransition(StateEntryDurationCondition(.0, self.__blink_off))
         self.t_blink_off.next_state = self.__blink_on
         self.__blink_off.add_transition(self.t_blink_off)
 
-        self.t_blink_on = ConditionalTransition(StateEntryDurationCondition(.0, MonitoredState()))
+        self.t_blink_on = ConditionalTransition(StateEntryDurationCondition(.0, self.__blink_on))
         self.t_blink_on.next_state = self.__blink_off
         self.__blink_on.add_transition(self.t_blink_on)
 
         ''' blink_4'''
         self.__blink_stop_begin = MonitoredState()
-        self.__blink_stop_begin = MonitoredState()
+        self.__blink_stop_begin.custom_value = .0
+        self.__blink_stop_end = MonitoredState()
+        self.__blink_stop_end.custom_value = .0
         self.__blink_stop_off = state_generator()
         self.__blink_stop_on = state_generator()
 
-        self.t_blink_stop_begin_0 = ConditionalTransition(StateValueCondition(.0, MonitoredState()))
-        self.t_blink_stop_begin_1 = ConditionalTransition(StateValueCondition(.0, MonitoredState()))
+        self.t_blink_stop_begin_0 = ConditionalTransition(StateValueCondition(.0, self.__blink_stop_begin))
+        self.t_blink_stop_begin_1 = ConditionalTransition(StateValueCondition(.0, self.__blink_stop_begin))
         self.t_blink_stop_begin_0.next_state = self.__blink_stop_off
         self.t_blink_stop_begin_1.next_state = self.__blink_stop_on
         self.__blink_stop_begin.add_transition(self.t_blink_stop_begin_0)
         self.__blink_stop_begin.add_transition(self.t_blink_stop_begin_1)
 
-        self.t_blink_stop_off = ConditionalTransition(StateEntryDurationCondition(.0, MonitoredState()))
+        self.t_blink_stop_off = ConditionalTransition(StateEntryDurationCondition(.0, self.__blink_stop_off))
         self.t_blink_stop_off.next_state = self.__blink_stop_on
         self.__blink_stop_off.add_transition(self.t_blink_stop_off)
 
-        self.t_blink_stop_on = ConditionalTransition(StateEntryDurationCondition(.0, MonitoredState()))
+        self.t_blink_stop_on = ConditionalTransition(StateEntryDurationCondition(.0, self.__blink_stop_on))
         self.t_blink_stop_on.next_state = self.__blink_stop_off
         self.__blink_stop_on.add_transition(self.t_blink_stop_on)
 
@@ -109,8 +113,20 @@ class Blinker(FiniteStateMachine):
         return False
 
     @property
+    def is_on_duration(self) -> bool:
+        if self.current_applicative_state is self.__on_duration:
+            return True
+        return False
+
+    @property
     def is_off(self) -> bool:
         if self.current_applicative_state is self.__off:
+            return True
+        return False
+
+    @property
+    def is_off_duration(self) -> bool:
+        if self.current_applicative_state is self.__off_duration:
             return True
         return False
 
@@ -122,7 +138,6 @@ class Blinker(FiniteStateMachine):
 
     def turn_on_1(self, duration: float) -> None:
         self.__on_duration.transitions[0].condition.duration = duration
-        print(len(self.__on_duration.transitions))
         self.transit_to(self.__on_duration) 
 
     def turn_off_1(self, duration: float) -> None:
@@ -278,25 +293,27 @@ if __name__ == '__main__':
         TEST VALIDÉ ET APPROUVÉ PAR JC
     '''
     
-    # blinker_000.turn_off_0() # off
-    # print(blinker_000.is_on) # check    
-    # time_reference = perf_counter()
-    # time_duration = 5
-    # blinker_000.turn_off_1(duration= 3.0)
-    # while perf_counter() - time_reference < time_duration:
-    #     blinker_000.track()
-    #     print(blinker_000.is_on) 
-        
-    blinker_000.turn_on_0() # on
-    print(blinker_000.is_on) # check  
+    blinker_000.turn_off_0() # off
+    print(blinker_000.is_on) # check    
     time_reference = perf_counter()
     time_duration = 5
-    blinker_000.turn_on_1(duration= 3.0)
+    blinker_000.turn_off_1(duration= 3.0)
     while perf_counter() - time_reference < time_duration:
         blinker_000.track()
-        print(blinker_000.is_on) 
-
-
+        print(blinker_000.is_off_duration) 
+        
+    # blinker_000.turn_on_0() # on
+    # print(blinker_000.is_on) # check  
+    # time_reference = perf_counter()
+    # time_duration = 5
+    # blinker_000.turn_on_1(duration=3.0)
+    # print(blinker_000.is_on) # check  
+    # while perf_counter() - time_reference < time_duration:
+    #     blinker_000.track()
+    #     print(blinker_000.is_on_duration) # check  
+    
+    
+    
     # print("clignotant")
     # blinker_000.blink1(cycle_duration=1, percent_on= 0.5, begin_on= True)
     # print(blinker_000.is_on)
