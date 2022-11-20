@@ -18,13 +18,17 @@ class State:
 
     """ ACCESSEURS """
 
-    """ State est valide selon 1 critère
+    """ State est valide selon 2 critères
+    * existe-il au moins 1 transition ?
     * est-ce que chacune des transitions listées est valide ?
     """
 
     @property
     def is_valid(self) -> bool:
-        # critère 000 : chaque transition doit être considérée comme étant valide
+        # critère 001 : ANNULÉ PAR LE PROF
+        #if len(self.__transitions) < 1 and not self.is_terminal:
+        #    raise Exception("Il faut au moins une transition à un état qui n'est pas terminal.")
+        # critère 002
         for t in self.__transitions:
             if not t.is_valid:
                 raise Exception("Une des transitions est invalide. Peut-être qu'il manque la condition.")
@@ -139,7 +143,8 @@ class Transition(ABC):
         pass
 
 
-# LEVEL 01 : FINITE STATE MACHINE
+""" LEVEL 01 : FINITE STATE MACHINE """
+
 class FiniteStateMachine:
     class OperationState(Enum):
         UNITIALIZED = 0
@@ -166,8 +171,7 @@ class FiniteStateMachine:
                 raise Exception("Il faut que l'état initial soit dans la liste des états.")
             for state in self.__states:
                 if not state.is_valid:
-                    raise Exception("Un des états qui n'est pas terminal ne possède pas de transition ou bien une des "
-                                    "transitions ne possède pas de prochain état.")
+                    raise Exception("Une des transitions ne possède pas de prochain état.")
             return True
 
         @property
@@ -205,7 +209,7 @@ class FiniteStateMachine:
         self.__current_operational_state: FiniteStateMachine.OperationState = \
             FiniteStateMachine.OperationState.UNITIALIZED if uninitialized else FiniteStateMachine.OperationState.IDLE
 
-    # l'action e cours de l'engin de resolution
+    # l'action en cours de l'engin de resolution
     @property
     def current_operational_state(self) -> OperationState:
         return self.__current_operational_state
@@ -249,7 +253,7 @@ class FiniteStateMachine:
         while reset is True:
             # comteur de temps en seconde
             timer_total = perf_counter() - timer_start
-            print(self.__current_operational_state)
+            # print(self.__current_operational_state)
             if time_budget is not None:
                 if not self.track() or timer_total > time_budget:
                     return

@@ -1,7 +1,7 @@
 from mimetypes import init
 from level_one import *
 from abc import ABC, abstractmethod
-from time import perf_counter
+from time import perf_counter, sleep
 from typing import List
 
 
@@ -94,9 +94,6 @@ class MonitoredState(ActionState):
     def entry_count(self) -> int:
         return self.__entry_count
 
-    @property
-    def custom_value(self) -> any:
-        return self.custom_value
 
     """ MUTATEURS """
 
@@ -121,10 +118,6 @@ class MonitoredState(ActionState):
         else:
             raise TypeError("Le paramètre doit être typé 'int'.")
 
-    @custom_value.setter
-    def custom_value(self, new_custom_value: any):
-        self.custom_value = new_custom_value
-
     """ MÉTHODES """
 
     def reset_last_times(self):
@@ -135,10 +128,14 @@ class MonitoredState(ActionState):
         self.entry_count: int = 0
 
     def _exec_entering_action(self):
-        self._do_entering_action()
+        self.entry_count += 1
+        self.last_entry_time = perf_counter()
+        super()._exec_entering_action()
 
     def _exec_exiting_action(self):
-        self._do_exiting_action
+        super()._exec_exiting_action()
+        self.last_exit_time = perf_counter()
+        
 
 
 #########################
@@ -244,17 +241,6 @@ class Condition(ABC):
         else:
             raise TypeError("La variable inverse doit être de type bool.")
 
-    # @property
-    # def inverse(self) -> None:
-    #     return self.__inverse
-    #
-    # @inverse.setter
-    # def inverse(self, value: bool) -> bool:
-    #     if type(value) is bool:
-    #         self.__inverse = value
-    #     else:
-    #         raise TypeError("Le prochain état doit être de type bool.")
-
     @abstractmethod
     def _compare(self) -> bool:
         pass
@@ -315,11 +301,6 @@ class TimedCondition(Condition):
 
 ########
 
-
-# Comment cet objet peut être une liste de conditions ???
-# class ConditionList:
-#     def __init__(self):
-#         pass
 ConditionList: List[Condition] = []
 
 
@@ -348,7 +329,10 @@ class AllCondition(ManyConditions):
         self.__inverse: bool = inverse
 
     def _compare(self) -> bool:
-        return self.__inverse
+        for condition in self._conditions:
+            if not bool(condition):
+                return False
+        return True
 
 
 class NoneCondition(ManyConditions):
@@ -356,7 +340,11 @@ class NoneCondition(ManyConditions):
         super().__init__(inverse)
 
     def _compare(self) -> bool:
-        return self.__inverse
+        for condition in self._conditions:
+            if bool(condition):
+                return False
+        return True
+
 
 
 class AnyCondition(ManyConditions):
@@ -364,16 +352,17 @@ class AnyCondition(ManyConditions):
         super().__init__(inverse)
 
     def _compare(self) -> bool:
-        return self.__inverse
+        for condition in self._conditions:
+            if bool(condition):
+                return True
+        return False
 
-
-########
 
 
 ''' MonitoredStateCondition '''
 
 
-class MonitoredStateCondition(Condition):
+class MonitoredStateCondition(Condition, ABC):
     def __init__(self, monitored_state: MonitoredState, inverse: bool = False):
         super().__init__(inverse)
         if isinstance(monitored_state, MonitoredState):
@@ -402,9 +391,10 @@ class StateEntryDurationCondition(MonitoredStateCondition):
     def __init__(self, duration: float, monitored_state: MonitoredState, inverse: bool = False):
         super().__init__(monitored_state, inverse)
         ''' le temps requis à passer dans un certain State avant de déclencher transition vers le prochain State '''
-        self.__duration: float = duration
-        self.__inverse: bool = inverse
-        self._monitored_state.last_entry_time = perf_counter()  # secondes
+        if type(duration) is float:
+            self.__duration: float = duration
+        else:
+            raise TypeError("La variable duration doit être de type float.")
 
     """ ACCESSEURS """
 
@@ -412,24 +402,24 @@ class StateEntryDurationCondition(MonitoredStateCondition):
     def duration(self) -> float:
         return self.__duration
 
-    @property
-    def perf_counter(self) -> float:
-        return perf_counter() - self.__elapsedTime
+
     """ MUTATEURS """
 
     @duration.setter
     def duration(self, new_duration: float):
-        if not isinstance(new_duration, float):
+        if type(new_duration) is float:
+            self.__duration = new_duration
+        else:
             raise TypeError("Le paramètre doit être typé 'float'.")
-        self.__duration = new_duration
 
     """ MÉTHODES """
 
     ''' inverse géré implicitement par magic function __call__ de la classe Condition '''
-    ''' condition véritable lorsque temps passé dans un State à quitter dépasse le temps requis avant de transiger '''
+    ''' condition véritable lorsque le State a dépassé le temps d'activité minimal et requis avant la transition '''
 
     def _compare(self) -> bool:
-        return perf_counter() - self._monitored_state.last_entry_time >= self.__duration
+        timer = perf_counter() - self._monitored_state.last_entry_time # MonitorState
+        return timer >= self.__duration
 
 
 class StateEntryCountCondition(MonitoredStateCondition):
@@ -474,18 +464,25 @@ class StateEntryCountCondition(MonitoredStateCondition):
     ''' condition véritable lorsque le nombre de fois que le State sollicite la transition dépasse le nombre '''
 
     def _compare(self) -> bool:
-        self.__ref_count += 1
-        return self.__ref_count >= self.__expected_count
+        self.__ref_count = self.monitored_state.entry_count
+        count_reached = self.__ref_count >= self.__expected_count
+        if self.__auto_reset and count_reached:
+            self.reset_count()
+        return count_reached
 
     def reset_count(self):
-        self.__ref_count = 0
+        self.monitored_state.reset_entry_count()
 
 
 class StateValueCondition(MonitoredStateCondition):
     def __init__(self, expected_value: any, monitored_state: MonitoredState, inverse: bool = False):
         super().__init__(monitored_state, inverse)
         ''' self.__expected_value strictement équivalente à MonitoredState's custom_value propriété '''
-        self.__expected_value: any = expected_value
+        if type(expected_value) is type(monitored_state.custom_value):
+            self.__expected_value: any = expected_value
+        else:
+            raise TypeError("Le type de la variable expected_value doit être comparable \
+                à custom_value du MonitoredState")
 
     """ ACCESSEURS """
 
@@ -497,7 +494,11 @@ class StateValueCondition(MonitoredStateCondition):
 
     @expected_value.setter
     def expected_value(self, new_expected_value: any):
-        self.__expected_value = new_expected_value
+        if type(new_expected_value) is type(self.monitored_state.custom_value):
+            self.__expected_value = new_expected_value
+        else:
+            raise TypeError("Le type de la variable expected_value doit être comparable \
+                à custom_value du MonitoredState")
 
     """ MÉTHODES """
 
