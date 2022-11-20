@@ -479,8 +479,9 @@ def test_seven():
 '''
 FONCTIONNEL - quelques questions à poser au prof (voir readme)
     Test #8 :
-    Deux MonitoredState avec une transition dotée d'une StateEntryDurationCondition
+    Deux states avec une transition dotée d'une StateEntryDurationCondition
     La première action est répétée jusqu'à ce que la condition soit remplie puis la deuxième action est exécutée.
+    Boucle infinie.
 '''
 def test_eight():
     # Création du MonitoredState (state initial)
@@ -538,23 +539,153 @@ def test_eight():
 
 
 '''
----
+FONCTIONNEL
     Test #9 :
-    Deux MonitoredState avec une transition dotée d'une StateEntryCountCondition
-    La première action est répétée jusqu'à ce que la condition soit remplie puis la deuxième action est exécutée.
+    Deux states avec une transition dotée d'une StateEntryCountCondition + une autre transition entre chaque state.
+    Après un certain nombre d'entrées dans le premier state, la condition StateEntryCountCondition est remplie
+    et puisqu'elle se trouve en premier dans la liste de transitions du state, cette-dernière est exécutée.
+    Si auto_reset est True, on reinitialise le compteur du nombre d'entrées du state dans la fonction de la transition
+    _compare lorsqu'on atteint le expected_count
+    
 '''
 def test_nine():
-    pass
+ # Création du MonitoredState (state initial)
+    m_state_000 = MonitoredState()
+    # Création des transitions
+    condition_000 = StateEntryCountCondition(expected_count=5, monitored_state=m_state_000)
+    transition_000 = ActionTransition()
+    transition_000.condition = condition_000
+
+    condition_001 = TimedCondition(1.0)
+    transition_001 = ActionTransition()
+    transition_001.condition = condition_001
+
+    condition_002 = TimedCondition(1.0, m_state_000.last_exit_time)
+    transition_002 = ActionTransition()
+    transition_002.condition = condition_002
+
+    # Création du deuxième state
+    params_001 = State.Parameters()
+    # params_001.do_in_state_action_when_entering = True
+    params_001.do_in_state_action_when_exiting = True
+    # params_001.terminal = True
+    m_state_001 = ActionState(params_001)
+
+    # Ajout des actions aux states et à la transition
+    m_state_000.add_entering_action(print_1)
+    # m_state_000.add_in_state_action(print_2)
+    def change_time_reference_001():
+        condition_001.reset()
+    def change_time_reference_002():
+        condition_002.reset()
+    m_state_000.add_exiting_action(change_time_reference_002)
+    m_state_001.add_exiting_action(change_time_reference_001)
+    transition_000.add_transiting_action(print_4)
+    m_state_001.add_entering_action(print_6)
+    # m_state_001.add_in_state_action(print_7)
+    # m_state_001.add_exiting_action(print_8)
+
+    # Ajout des next_state aux transitions
+    transition_000.next_state = m_state_001
+    transition_001.next_state = m_state_001
+    transition_002.next_state = m_state_000
+    # Ajout des transitions aux states
+    m_state_000.add_transition(transition_000)
+    m_state_000.add_transition(transition_001)
+    m_state_001.add_transition(transition_002)
+
+    # Création de la liste de states pour le layout
+    state_list = list()
+    state_list.append(m_state_000)
+    state_list.append(m_state_001)
+
+    # Création du layout
+    layout = FiniteStateMachine.Layout(state_list, m_state_000)
+    fsm = FiniteStateMachine(layout)
+
+    # Exécution de la machine d'états
+    print(fsm.current_operational_state)  # Current Operational State est soit UNITIALIZED OU IDLE
+    fsm.reset()  # Current Operational State est IDLE
+    print(fsm.current_operational_state)
+    fsm.start(time_budget=25)  # Current Operational State devient RUNNING
+    print(fsm.current_operational_state)  # Current Operational State est devenu TERMINAL_REACHED
 
 
 '''
----
+FONCTIONNEL
     Test #10 :
-    Deux MonitoredState avec une transition dotée d'une StateValueCondition
-    La première action est répétée jusqu'à ce que la condition soit remplie puis la deuxième action est exécutée.
+    Deux states avec une transition dotée d'une StateValueCondition et deux autres transitions pour les relier autrement.
+    La valeur custom_value du monitoredstate est incrémentée à chaque entrée du state #2
+    jusqu'à atteindre la valeur expected_value de la StateValueCondition. 
+    La transition par StateValueCondition est alors appelée.
 '''
 def test_ten():
-    pass
+# Création du MonitoredState (state initial)
+    m_state_000 = MonitoredState()
+    m_state_000.custom_value = 0.0
+    # Création des transitions
+    condition_000 = StateValueCondition(10.0, m_state_000)
+    transition_000 = ActionTransition()
+    transition_000.condition = condition_000
+
+    condition_001 = TimedCondition(1.0)
+    transition_001 = ActionTransition()
+    transition_001.condition = condition_001
+
+    condition_002 = TimedCondition(1.0, m_state_000.last_exit_time)
+    transition_002 = ActionTransition()
+    transition_002.condition = condition_002
+
+    # Création du deuxième state
+    params_001 = State.Parameters()
+    # params_001.do_in_state_action_when_entering = True
+    params_001.do_in_state_action_when_exiting = True
+    # params_001.terminal = True
+    m_state_001 = ActionState(params_001)
+
+    # Ajout des actions aux states et à la transition
+    m_state_000.add_entering_action(print_1)
+    # m_state_000.add_in_state_action(print_2)
+    def change_time_reference_001():
+        condition_001.reset()
+    def change_time_reference_002():
+        condition_002.reset()
+    m_state_000.add_exiting_action(change_time_reference_002)
+    m_state_001.add_exiting_action(change_time_reference_001)
+    transition_000.add_transiting_action(print_4)
+    def increment_custom_value():
+        transition_000.condition.monitored_state.custom_value += 1
+        print(transition_000.condition.monitored_state.custom_value)
+    m_state_001.add_entering_action(increment_custom_value)
+    m_state_001.add_entering_action(print_6)
+    # m_state_001.add_in_state_action(print_7)
+    # m_state_001.add_exiting_action(print_8)
+
+    # Ajout des next_state aux transitions
+    transition_000.next_state = m_state_001
+    transition_001.next_state = m_state_001
+    transition_002.next_state = m_state_000
+    # Ajout des transitions aux states
+    m_state_000.add_transition(transition_000)
+    m_state_000.add_transition(transition_001)
+    m_state_001.add_transition(transition_002)
+
+    # Création de la liste de states pour le layout
+    state_list = list()
+    state_list.append(m_state_000)
+    state_list.append(m_state_001)
+
+    # Création du layout
+    layout = FiniteStateMachine.Layout(state_list, m_state_000)
+    fsm = FiniteStateMachine(layout)
+
+    # Exécution de la machine d'états
+    print(fsm.current_operational_state)  # Current Operational State est soit UNITIALIZED OU IDLE
+    fsm.reset()  # Current Operational State est IDLE
+    print(fsm.current_operational_state)
+    while transition_000.condition.monitored_state.custom_value < 12:
+        fsm.track()
+    print(fsm.current_operational_state)  # Current Operational State est devenu TERMINAL_REACHED
 
 if __name__ == '__main__':
     # test_one()
@@ -564,6 +695,6 @@ if __name__ == '__main__':
     # test_five()
     # test_six()
     # test_seven()
-    test_eight()
+    # test_eight()
     # test_nine()
-    # test_ten()
+    test_ten()

@@ -94,9 +94,6 @@ class MonitoredState(ActionState):
     def entry_count(self) -> int:
         return self.__entry_count
 
-    @property
-    def custom_value(self) -> any:
-        return self.custom_value
 
     """ MUTATEURS """
 
@@ -120,10 +117,6 @@ class MonitoredState(ActionState):
             self.__entry_count: int = new_entry_count
         else:
             raise TypeError("Le paramètre doit être typé 'int'.")
-
-    @custom_value.setter
-    def custom_value(self, new_custom_value: any):
-        self.custom_value = new_custom_value
 
     """ MÉTHODES """
 
@@ -471,18 +464,25 @@ class StateEntryCountCondition(MonitoredStateCondition):
     ''' condition véritable lorsque le nombre de fois que le State sollicite la transition dépasse le nombre '''
 
     def _compare(self) -> bool:
-        self.__ref_count += 1
-        return self.__ref_count >= self.__expected_count
+        self.__ref_count = self.monitored_state.entry_count
+        count_reached = self.__ref_count >= self.__expected_count
+        if self.__auto_reset and count_reached:
+            self.reset_count()
+        return count_reached
 
     def reset_count(self):
-        self.__ref_count = 0
+        self.monitored_state.reset_entry_count()
 
 
 class StateValueCondition(MonitoredStateCondition):
     def __init__(self, expected_value: any, monitored_state: MonitoredState, inverse: bool = False):
         super().__init__(monitored_state, inverse)
         ''' self.__expected_value strictement équivalente à MonitoredState's custom_value propriété '''
-        self.__expected_value: any = expected_value
+        if type(expected_value) is type(monitored_state.custom_value):
+            self.__expected_value: any = expected_value
+        else:
+            raise TypeError("Le type de la variable expected_value doit être comparable \
+                à custom_value du MonitoredState")
 
     """ ACCESSEURS """
 
@@ -494,7 +494,11 @@ class StateValueCondition(MonitoredStateCondition):
 
     @expected_value.setter
     def expected_value(self, new_expected_value: any):
-        self.__expected_value = new_expected_value
+        if type(new_expected_value) is type(self.monitored_state.custom_value):
+            self.__expected_value = new_expected_value
+        else:
+            raise TypeError("Le type de la variable expected_value doit être comparable \
+                à custom_value du MonitoredState")
 
     """ MÉTHODES """
 
