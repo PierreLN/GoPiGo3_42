@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from time import perf_counter, sleep
 from typing import List
 
+
 """ LEVEL 02 : STATE """
 
 
@@ -247,17 +248,6 @@ class Condition(ABC):
         else:
             raise TypeError("La variable inverse doit être de type bool.")
 
-    # @property
-    # def inverse(self) -> None:
-    #     return self.__inverse
-    #
-    # @inverse.setter
-    # def inverse(self, value: bool) -> bool:
-    #     if type(value) is bool:
-    #         self.__inverse = value
-    #     else:
-    #         raise TypeError("Le prochain état doit être de type bool.")
-
     @abstractmethod
     def _compare(self) -> bool:
         pass
@@ -318,11 +308,6 @@ class TimedCondition(Condition):
 
 ########
 
-
-# Comment cet objet peut être une liste de conditions ???
-# class ConditionList:
-#     def __init__(self):
-#         pass
 ConditionList: List[Condition] = []
 
 
@@ -351,7 +336,10 @@ class AllCondition(ManyConditions):
         self.__inverse: bool = inverse
 
     def _compare(self) -> bool:
-        return self.__inverse
+        for condition in self._conditions:
+            if not bool(condition):
+                return False
+        return True
 
 
 class NoneCondition(ManyConditions):
@@ -359,7 +347,11 @@ class NoneCondition(ManyConditions):
         super().__init__(inverse)
 
     def _compare(self) -> bool:
-        return self.__inverse
+        for condition in self._conditions:
+            if bool(condition):
+                return False
+        return True
+
 
 
 class AnyCondition(ManyConditions):
@@ -367,10 +359,11 @@ class AnyCondition(ManyConditions):
         super().__init__(inverse)
 
     def _compare(self) -> bool:
-        return self.__inverse
+        for condition in self._conditions:
+            if bool(condition):
+                return True
+        return False
 
-
-########
 
 
 ''' MonitoredStateCondition '''
@@ -405,8 +398,10 @@ class StateEntryDurationCondition(MonitoredStateCondition):
     def __init__(self, duration: float, monitored_state: MonitoredState, inverse: bool = False):
         super().__init__(monitored_state, inverse)
         ''' le temps requis à passer dans un certain State avant de déclencher transition vers le prochain State '''
-        self.__duration: float = duration
-        self.__inverse: bool = inverse
+        if type(duration) is float:
+            self.__duration: float = duration
+        else:
+            raise TypeError("La variable duration doit être de type float.")
 
     """ ACCESSEURS """
 
@@ -431,7 +426,7 @@ class StateEntryDurationCondition(MonitoredStateCondition):
 
     def _compare(self) -> bool:
         timer = perf_counter() - self._monitored_state.last_entry_time # MonitorState
-        return timer > self.__duration
+        return timer >= self.__duration
 
 
 class StateEntryCountCondition(MonitoredStateCondition):
