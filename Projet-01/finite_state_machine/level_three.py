@@ -153,6 +153,8 @@ class Blinker(FiniteStateMachine):
     #         return True
     #     return False  
       
+      
+      # a modifer
     @property
     def is_off(self) -> bool:
         if self.current_applicative_state is self.__off:
@@ -382,7 +384,7 @@ class SideBlinker(FiniteStateMachine):
     def is_off(self, side: Side):
         if side is SideBlinker.Side.LEFT:
             return self.__left_blinker.is_off
-        if side is SideBlinker.Side.RIGHT:
+        elif side is SideBlinker.Side.RIGHT:
             return self.__right_blinker.is_off
         if side is SideBlinker.Side.BOTH:
             return self.__left_blinker.is_off and self.__right_blinker.is_off
@@ -467,25 +469,7 @@ class SideBlinker(FiniteStateMachine):
             self.__right_blinker.turn_on_1(duration)
             self.__left_blinker.turn_off_1(duration)
             
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-    """ fonctions blink_x """
-
+   """ fonctions blink_x """
     def blink1(
             self
             , side: Side
