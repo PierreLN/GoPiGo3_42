@@ -39,10 +39,10 @@ class Blinker(FiniteStateMachine):
         # déterminer le prochain état après la Transition effectuée (le State self.__on est le prochain ici)
         # ne pas oublier de dé-commenter plus bas au moment d'ajouter le State dans la liste du Layout
 
-
         ''' blink_1'''
         self.__blink_begin = MonitoredState()
         self.__blink_begin.custom_value = .0
+        
         self.__blink_off = state_generator()
         self.__blink_on = state_generator()
 
@@ -61,11 +61,20 @@ class Blinker(FiniteStateMachine):
         self.t_blink_on.next_state = self.__blink_off
         self.__blink_on.add_transition(self.t_blink_on)
 
+
+
+
+
+
+
+
+
         ''' blink_4'''
         self.__blink_stop_begin = MonitoredState()
         self.__blink_stop_begin.custom_value = .0
         self.__blink_stop_end = MonitoredState()
         self.__blink_stop_end.custom_value = .0
+        
         self.__blink_stop_off = state_generator()
         self.__blink_stop_on = state_generator()
 
@@ -86,6 +95,10 @@ class Blinker(FiniteStateMachine):
 
         # add fin ...
 
+
+
+
+
         super().__init__(
             FiniteStateMachine.Layout(
                 [
@@ -97,10 +110,10 @@ class Blinker(FiniteStateMachine):
                     , self.__blink_off
                     , self.__blink_on
 
-                    # , self.blink_stop_begin
-                    # , self.blink_stop_off
-                    # , self.blink_stop_on
-                    # , self.blink_stop_end
+                    , self.__blink_stop_begin
+                    , self.__blink_stop_off
+                    , self.__blink_stop_on
+                    , self.__blink_stop_end
                 ]
                 , self.__off
             )
@@ -117,6 +130,12 @@ class Blinker(FiniteStateMachine):
         if self.current_applicative_state is self.__on_duration:
             return True
         return False
+    
+    @property
+    def is_on_blink(self) -> bool:
+        if self.current_applicative_state is self.__blink_on:
+            return True
+        return False
 
     @property
     def is_off(self) -> bool:
@@ -129,6 +148,13 @@ class Blinker(FiniteStateMachine):
         if self.current_applicative_state is self.__off_duration:
             return True
         return False
+    
+    @property
+    def is_off_blink(self) -> bool:
+        if self.current_applicative_state is self.__blink_off:
+            return True
+        return False    
+    
 
     def turn_on_0(self):
         self.transit_to(self.__on)
@@ -146,11 +172,19 @@ class Blinker(FiniteStateMachine):
 
     def blink1(self, cycle_duration: float = 1.0, percent_on: float = 0.5, begin_on: bool = True) -> None:
         self.__blink_begin.custom_value = percent_on
-        self.__blink_off.transitions[0].condition.duration = cycle_duration * self.__blink_begin.custom_value
+        self.__blink_off.transitions[0].condition.duration = cycle_duration - (cycle_duration * self.__blink_begin.custom_value)
         self.__blink_on.transitions[0].condition.duration = cycle_duration * self.__blink_begin.custom_value
+        
         if begin_on:
             self.transit_to(self.__blink_on)
+        else: 
+            self.transit_to(self.__blink_off)
 
+
+
+
+
+            
     def blink2(self, total_duration: float, cycle_duration: float = 1.0, percent_on: float = 0.5, begin_on: bool = True,
                end_off: bool = True) -> None:
         pass
@@ -158,116 +192,35 @@ class Blinker(FiniteStateMachine):
     def blink3(self, total_duration: float, n_cycles: int, percent_on: float = 0.5, begin_on: bool = True,
                end_off: bool = True) -> None:
         pass
+    
+    
+    
+    
+    
+    
 
     def blink4(self, n_cycles: int, cycle_duration: float = 1.0, percent_on: float() = 0.5, begin_on: bool = True,
                end_off: bool = True) -> None:
 
-        # blink_stop_begin.custom_value
-        # blink_stop_off.transition0.condition.duration
-        # blink_stop_off.transition1.condition.duration
-        # blink_stop_on.transition0.condition.duration
-        # blink_stop_on.transition1.condition.duration
-        # blink_stop_end.custom_value
-        pass
-
-
-class SideBlinker:
-    class Side(Enum):
-        LEFT = 0
-        RIGHT = 1
-        BOTH = 2
-        LEFT_RECIPROCAL = 3
-        RIGHT_RECIPROCAL = 4
-
-    # def __init__(
-    #         self
-    #         , left_blinker: Blinker
-    #         , right_blinker: Blinker
-    #         , left_off_state_generator: Blinker.StateGenerator
-    #         , left_on_state_generator: Blinker.StateGenerator
-    #         , right_off_state_generator: Blinker.StateGenerator
-    #         , right_on_state_generator: Blinker.StateGenerator
-    # ):
-    #     self.__left_blinker = left_blinker
-    #     self.__right_blinker = right_blinker
-
-    ''' MÉTHODES '''
-
-    @property
-    def is_off(self, side: Side):
-        # if side is SideBlinker.Side.LEFT:
-        #     if self.__left_blinker.
-        pass
-        # if side (ex: left_blinker) is off
-        # return True
-        # else return False
-
-    def is_on(self, side: Side):
-        pass
-        # if side (ex: left_blinker) is on
-        # return True
-        # else return False
-
-    def turn_off_0(self, side: Side):
-        pass
-
-    def turn_on_0(self, side: Side):
-        # if side is SideBlinker.Side.LEFT:
-        #     self.__left_blinker.left_on_state_generator()
-        pass
-
-    def turn_off_1(self, side: Side, duration: float):
-        pass
-
-    def turn_on_1(self, side: Side, duration: float):
-        pass
-
-    """ fonctions blink_x """
-
-    def blink_0(
-            self
-            , side: Side
-            , cycle_duration: float = 1.
-            , percent_on: float = .5
-            , begin_on: bool = True
-    ):
-        pass
-
-    def blink_1(
-            self
-            , side: Side
-            , total_duration: float
-            , cycle_duration: float = 1.
-            , percent_on: float = .5
-            , begin_on: bool = True
-            , end_off: bool = True
-    ):
-        pass
-
-    def blink_2(
-            self
-            , side: Side
-            , total_duration: float
-            , n_cycles: int
-            , percent_on: float = .5
-            , begin_on: bool = True
-            , end_off: bool = True
-    ):
-        pass
-
-    def blink_3(
-            self
-            , side: Side
-            , n_cycles: int
-            , cycle_duration: float = 1.
-            , percent_on: float = .5
-            , begin_on: bool = True
-            , end_on: bool = True
-    ):
-        pass
-
-    def track(self):
-        pass
+        self.__blink_stop_begin.custom_value = percent_on
+        self.__blink_stop_off.transition0[0].condition.duration = cycle_duration - (cycle_duration * self.__blink_begin.custom_value)
+        self.__blink_stop_off.transition1[0].condition.duration = cycle_duration - (cycle_duration * self.__blink_begin.custom_value)
+        self.__blink_stop_on.transition0[0].condition.duration = cycle_duration * self.__blink_begin.custom_value
+        self.__blink_stop_on.transition1[0].condition.duration = cycle_duration * self.__blink_begin.custom_value
+        self.__blink_stop_end.custom_value = percent_on
+        
+        if begin_on:
+            self.transit_to(self.__blink_stop_on)
+        else:
+            self.transit_to(self.__blink_stop_off)
+        
+        
+        compteur += 1
+        if end_off and n_cycles > compteur:
+            self.transit_to(self.__off)
+        else:
+            self.transit_to(self.__on)
+        
 
 
 if __name__ == '__main__':
@@ -293,14 +246,15 @@ if __name__ == '__main__':
         TEST VALIDÉ ET APPROUVÉ PAR JC
     '''
     
-    blinker_000.turn_off_0() # off
-    print(blinker_000.is_on) # check    
-    time_reference = perf_counter()
-    time_duration = 5
-    blinker_000.turn_off_1(duration= 3.0)
-    while perf_counter() - time_reference < time_duration:
-        blinker_000.track()
-        print(blinker_000.is_off_duration) 
+    # test fonctionne
+    # blinker_000.turn_off_0() # off
+    # print(blinker_000.is_on) # check    
+    # time_reference = perf_counter()
+    # time_duration = 5
+    # blinker_000.turn_off_1(duration= 3.0)
+    # while perf_counter() - time_reference < time_duration:
+    #     blinker_000.track()
+    #     print(blinker_000.is_off_duration) 
         
     # blinker_000.turn_on_0() # on
     # print(blinker_000.is_on) # check  
@@ -312,8 +266,19 @@ if __name__ == '__main__':
     #     blinker_000.track()
     #     print(blinker_000.is_on_duration) # check  
     
-    
-    
-    # print("clignotant")
-    # blinker_000.blink1(cycle_duration=1, percent_on= 0.5, begin_on= True)
-    # print(blinker_000.is_on)
+    print("== blink_1 ==")
+    time_reference = perf_counter()
+    time_duration = 5
+    blinker_000.blink1(cycle_duration=1, percent_on= 0.7, begin_on = True)
+    while perf_counter() - time_reference < time_duration:
+        blinker_000.track()
+        print(blinker_000.is_on_blink)
+        
+        
+    # print("== blink_4 ==")
+    # time_reference = perf_counter()
+    # time_duration = 5
+    # blinker_000.blink4(n_cycles=3, cycle_duration=1, percent_on= 0.5, begin_on = True)
+    # while perf_counter() - time_reference < time_duration:
+    #     blinker_000.track()
+    #     print(blinker_000.is_on_blink)
