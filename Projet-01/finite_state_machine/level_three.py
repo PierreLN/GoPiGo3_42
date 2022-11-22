@@ -8,6 +8,8 @@ from level_two import StateEntryDurationCondition, ConditionalTransition, Monito
 from time import perf_counter, sleep
 from typing import Callable
 
+# A changer
+# A effacer
 
 class TextStateGenerator():
     def __init__(self, text_in = '', text_out = ''):
@@ -102,7 +104,7 @@ class Blinker(FiniteStateMachine):
         self.__blink_stop_end.add_transition(self.t__blink_stop_end_0)
         self.__blink_stop_end.add_transition(self.t__blink_stop_end_1)
         
-
+        # Layout
         super().__init__(
             FiniteStateMachine.Layout(
                 [
@@ -134,27 +136,8 @@ class Blinker(FiniteStateMachine):
         if self.current_applicative_state is self.__blink_stop_on:
             return True
         return False
-
-    # @property
-    # def is_on_duration(self) -> bool:
-    #     if self.current_applicative_state is self.__on_duration:
-    #         return True
-    #     return False
-    
-    # @property
-    # def is_on_blink(self) -> bool:
-    #     if self.current_applicative_state is self.__blink_on:
-    #         return True
-    #     return False
-    
-    # @property
-    # def is_blink_stop_on(self) -> bool:
-    #     if self.current_applicative_state is self.__blink_stop_on:
-    #         return True
-    #     return False  
       
       
-      # a modifer
     @property
     def is_off(self) -> bool:
         if self.current_applicative_state is self.__off:
@@ -166,24 +149,6 @@ class Blinker(FiniteStateMachine):
         if self.current_applicative_state is self.__blink_stop_off:
             return True
         return False
-
-    # @property
-    # def is_off_duration(self) -> bool:
-    #     if self.current_applicative_state is self.__off_duration:
-    #         return True
-    #     return False
-    
-    # @property
-    # def is_off_blink(self) -> bool:
-    #     if self.current_applicative_state is self.__blink_off:
-    #         return True
-    #     return False    
-    
-    # @property
-    # def is_blink_stop_off(self) -> bool:
-    #     if self.current_applicative_state is self.__blink_stop_off:
-    #         return True
-    #     return False    
     
 
     def turn_on_0(self):
@@ -204,21 +169,17 @@ class Blinker(FiniteStateMachine):
         self.__blink_begin.custom_value = begin_on
         self.__blink_off.transitions[0].condition.duration = cycle_duration - (cycle_duration * percent_on)
         self.__blink_on.transitions[0].condition.duration = cycle_duration * percent_on
-        
         self.transit_to(self.__blink_begin)
 
            
     def blink2(self, total_duration: float, cycle_duration: float = 1.0, percent_on: float = 0.5, begin_on: bool = True,
                end_off: bool = True) -> None:
-        
         self.__blink_stop_begin.custom_value = begin_on
         self.__blink_stop_off.transitions[0].condition.duration = cycle_duration - (cycle_duration * percent_on)
         self.__blink_stop_on.transitions[0].condition.duration = cycle_duration * percent_on
-        
         self.__blink_stop_off.transitions[1].condition.duration = total_duration 
         self.__blink_stop_on.transitions[1].condition.duration = total_duration
         self.__blink_stop_end.custom_value = end_off
-        
         self.transit_to(self.__blink_stop_begin)
         
 
@@ -232,40 +193,22 @@ class Blinker(FiniteStateMachine):
         self.__blink_stop_begin.custom_value = begin_on
         self.__blink_stop_off.transitions[0].condition.duration = cycle_duration - (cycle_duration * percent_on)
         self.__blink_stop_on.transitions[0].condition.duration = cycle_duration * percent_on
-        
         self.__blink_stop_off.transitions[1].condition.duration = total_duration 
         self.__blink_stop_on.transitions[1].condition.duration = total_duration
         self.__blink_stop_end.custom_value = end_off
-        
         self.transit_to(self.__blink_stop_begin)    
         
     
     def blink4(self, n_cycles: int, cycle_duration: float = 1.0, percent_on: float() = 0.5, begin_on: bool = True,
                end_off: bool = True) -> None:
-
         total_duration = cycle_duration * n_cycles
-
         self.__blink_stop_begin.custom_value = begin_on
         self.__blink_stop_off.transitions[0].condition.duration = cycle_duration - (cycle_duration * percent_on)
         self.__blink_stop_on.transitions[0].condition.duration = cycle_duration * percent_on
         self.__blink_stop_off.transitions[1].condition.duration = total_duration
         self.__blink_stop_on.transitions[1].condition.duration = total_duration
         self.__blink_stop_end.custom_value = end_off
-        
         self.transit_to(self.__blink_stop_begin)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class SideBlinker(FiniteStateMachine):
@@ -279,7 +222,6 @@ class SideBlinker(FiniteStateMachine):
     def __init__(self, state_generator: Blinker.StateGenerator):
         self.__left_blinker = Blinker(state_generator)
         self.__right_blinker = Blinker(state_generator)
-        
         self.__off = state_generator()
         self.__on = state_generator()
 
@@ -301,7 +243,6 @@ class SideBlinker(FiniteStateMachine):
         ''' blink_1 '''
         self.__blink_begin = MonitoredState()
         self.__blink_begin.custom_value = True
-        
         self.__blink_off = state_generator()
         self.__blink_on = state_generator()
 
@@ -318,7 +259,6 @@ class SideBlinker(FiniteStateMachine):
         self.t_blink_off = ConditionalTransition(StateEntryDurationCondition(.0, self.__blink_off))
         self.t_blink_off.next_state = self.__blink_on
         self.__blink_off.add_transition(self.t_blink_off)
-
 
         ''' blink_2, blink_3, blink_4 '''
         self.__blink_stop_begin = MonitoredState()
@@ -367,7 +307,6 @@ class SideBlinker(FiniteStateMachine):
                 , self.__blink_begin
                 , self.__blink_off
                 , self.__blink_on
-
                 , self.__blink_stop_begin
                 , self.__blink_stop_off
                 , self.__blink_stop_on
@@ -386,25 +325,28 @@ class SideBlinker(FiniteStateMachine):
             return self.__left_blinker.is_off
         elif side is SideBlinker.Side.RIGHT:
             return self.__right_blinker.is_off
-        if side is SideBlinker.Side.BOTH:
+        elif side is SideBlinker.Side.BOTH:
             return self.__left_blinker.is_off and self.__right_blinker.is_off
-        if side is SideBlinker.Side.LEFT_RECIPROCAL:
+        elif side is SideBlinker.Side.LEFT_RECIPROCAL:
             return self.__left_blinker.is_off and self.__right_blinker.is_on
-        if side is SideBlinker.Side.RIGHT_RECIPROCAL:
+        elif side is SideBlinker.Side.RIGHT_RECIPROCAL:
             return self.__left_blinker.is_on and self.__right_blinker.is_off
+        else:
+            return
         
-
     def is_on(self, side: Side):
         if side is SideBlinker.Side.LEFT:
             return self.__left_blinker.is_on
-        if side is SideBlinker.Side.RIGHT:
+        elif side is SideBlinker.Side.RIGHT:
             return self.__right_blinker.is_on
-        if side is SideBlinker.Side.BOTH:
+        elif side is SideBlinker.Side.BOTH:
             return self.__left_blinker.is_on and self.__right_blinker.is_on
-        if side is SideBlinker.Side.LEFT_RECIPROCAL:
+        elif side is SideBlinker.Side.LEFT_RECIPROCAL:
             return self.__left_blinker.is_on and self.__right_blinker.is_off
-        if side is SideBlinker.Side.RIGHT_RECIPROCAL:
+        elif side is SideBlinker.Side.RIGHT_RECIPROCAL:
             return self.__left_blinker.is_off and self.__right_blinker.is_on
+        else:
+            return
         
     def turn_off_0(self, side: Side):
         if side is SideBlinker.Side.LEFT:
@@ -420,8 +362,9 @@ class SideBlinker(FiniteStateMachine):
         elif side is SideBlinker.Side.RIGHT_RECIPROCAL:
             self.__right_blinker.turn_off_0()
             self.__left_blinker.turn_on_0()
-            
-    
+        else:
+            return 
+
     def turn_on_0(self, side: Side):
         if side is SideBlinker.Side.LEFT:
             self.__left_blinker.turn_on_0()
@@ -436,7 +379,8 @@ class SideBlinker(FiniteStateMachine):
         elif side is SideBlinker.Side.RIGHT_RECIPROCAL:
             self.__right_blinker.turn_on_0()
             self.__left_blinker.turn_off_0()
-            
+        else:
+            return
             
     def turn_off_1(self, side: Side, duration: float):
         if side is SideBlinker.Side.LEFT:
@@ -452,7 +396,8 @@ class SideBlinker(FiniteStateMachine):
         elif side is SideBlinker.Side.RIGHT_RECIPROCAL:
             self.__right_blinker.turn_off_1(duration)
             self.__left_blinker.turn_on_1(duration)
-            
+        else:
+            return
             
     def turn_on_1(self, side: Side, duration: float):
         if side is SideBlinker.Side.LEFT:
@@ -468,8 +413,12 @@ class SideBlinker(FiniteStateMachine):
         elif side is SideBlinker.Side.RIGHT_RECIPROCAL:
             self.__right_blinker.turn_on_1(duration)
             self.__left_blinker.turn_off_1(duration)
+        else:
+            return
             
-   """ fonctions blink_x """
+    
+    """ fonctions blink_x """
+    
     def blink1(
             self
             , side: Side
@@ -565,41 +514,16 @@ class SideBlinker(FiniteStateMachine):
         self.__right_blinker.track()
         return super().track()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if __name__ == '__main__':
     """ TESTS Blinker """
-    var = TextStateGenerator('State enter','State exit')
-    
-    blinker_000 = Blinker(
-        var
-    )
+    var = TextStateGenerator('State enter','State exit') # A changer
+    blinker_000 = Blinker(var)
+
     ''' test sur la transition d'un état non spécifié à ON (aucun temps requis) - allumer la machine '''
     # print(blinker_000.is_on)  # initialement, résultat attendu est False puisque état initial est OFF
     # blinker_000.turn_on_0()  # allumer la machine d'états
     # print(blinker_000.is_on)  # résultat attendu est désormais True puisque la machine d'états s'est allumé (ON)
+    
     ''' test sur la transition d'un état non spécifié à OFF (aucun temps requis) - éteindre la machine '''
     # print(blinker_000.is_off)  # résultat attendu est False (étant donné le test précédent)
     # blinker_000.turn_off_0()  # éteindre la machine d'états
@@ -662,9 +586,8 @@ if __name__ == '__main__':
     #     blinker_000.track()
     #     print(blinker_000.is_blink_stop_off)
    
-   
-   
-   
+
+    # LES SIDEBLINKERS
     sideblinker_000 = SideBlinker(var)
     # sideblinker_000.turn_off_0(SideBlinker.Side.LEFT_RECIPROCAL)
     
