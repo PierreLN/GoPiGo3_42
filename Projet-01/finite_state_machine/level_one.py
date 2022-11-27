@@ -251,6 +251,7 @@ class FiniteStateMachine:
     def start(self, reset: bool = True, time_budget: float = None) -> None:
         timer_start = perf_counter()
         self.__current_operational_state = FiniteStateMachine.OperationState.RUNNING
+        self.__current_applicative_state._exec_entering_action()
         while reset is True:
             # comteur de temps en seconde
             timer_total = perf_counter() - timer_start
