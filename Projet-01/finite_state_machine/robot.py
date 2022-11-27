@@ -6,4 +6,16 @@ class Robot():
         pass
 
 
-    
+
+
+class LedBlinkers(SideBlinker):
+    def __init__(self, state_generator: Blinker.StateGenerator):
+        super().__init__(state_generator)
+
+        pass
+
+class EyesBlinkers(SideBlinker):
+    def __init__(self, state_generator: Blinker.StateGenerator):
+        super().__init__(state_generator)
+
+        pass
