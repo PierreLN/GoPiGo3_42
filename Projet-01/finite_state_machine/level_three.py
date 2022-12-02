@@ -1,15 +1,3 @@
-from enum import Enum
-from functools import total_ordering
-from inspect import trace
-from logging import raiseExceptions
-from operator import truediv
-from level_one import FiniteStateMachine, State
-from level_two import StateEntryDurationCondition, ConditionalTransition, MonitoredState, StateValueCondition
-from time import perf_counter, sleep
-from typing import Callable
-
-# A changer
-# A effacer
 
 class TextStateGenerator():
     def __init__(self, text_in = '', text_out = ''):
@@ -18,9 +6,9 @@ class TextStateGenerator():
 
     def __call__(self) -> MonitoredState:
         state = MonitoredState()
-        state.add_entering_action(lambda :print(self.__text_in))
+#         state.add_entering_action(lambda :print(self.__text_in))
         # state.add_in_state_action(lambda: print("in state"))
-        state.add_exiting_action(lambda :print(self.__text_out))
+#         state.add_exiting_action(lambda :print(self.__text_out))
         return state
 
 class Blinker(FiniteStateMachine):
