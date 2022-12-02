@@ -41,7 +41,7 @@ class EyeBlinkers(SideBlinker):
         
     def set_right_eye_color(self, color):
         self.robot.set_right_eye_color(color)
-
+    
 class Robot():
     def __init__(self) -> None:
         self.robot = gpg.EasyGoPiGo3()
