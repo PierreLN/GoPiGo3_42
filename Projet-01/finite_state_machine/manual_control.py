@@ -1,16 +1,3 @@
-class RemoteControlTransition(MonitoredTransition):
-    def __init__(self, next_state = None ):
-        super().__init__(next_state)
-
-class RemoteControlCondition(ValueCondition):
-    def __init__(self, initial_value, expected_value, robot, inverse = False):
-        super().__init__(initial_value, expected_value, inverse)
-        self.robot = robot
-
-    def _compare(self):
-        longuest_string = 20 # longueur arbitraire, ne sert que pour l'affichage
-        print(f'\r{self.robot.remote_control.get_remote_code()}', sep='', end=' ' * longuest_string)
-        return self.expected_value == self.robot.remote_control.get_remote_code()
     
 class ManualControlStateMachine(FiniteStateMachine):
     def __init__(self, robot):
@@ -107,20 +94,7 @@ class ManualControlStateMachine(FiniteStateMachine):
         ''' LAYOUT '''
         self.layout = FiniteStateMachine.Layout([stop_state, forward_state, backward_state, rotate_right_state, rotate_left_state], stop_state)
         super().__init__(self.layout)
-      
-    
-class RobotState(MonitoredState):
-    def __init__(self, robot):
-        super().__init__()
-        self.robot = robot
-        
-    
-class ManualControlState(RobotState):
-    def __init__(self, robot, manual_control_state_machine):
-        super().__init__(robot)
-        self.fsm = manual_control_state_machine
-      
-    
+
 class C64Projet1(FiniteStateMachine):
     def __init__(self):
         self.robot = Robot()
@@ -128,21 +102,124 @@ class C64Projet1(FiniteStateMachine):
         ''' TELECOMMANDE '''
         def read_input_home():
             home_state.custom_value = self.robot.remote_control.get_remote_code()
-            
-        ''' STATE '''
+          
+        
+        ''' LES STATES '''
         home_state = MonitoredState()
+
         self.manual_control_fsm = ManualControlStateMachine(self.robot)
         manual_control_state = ManualControlState(self.robot, self.manual_control_fsm)
         
+        robot_instantiation_state = MonitoredState()
+        robot_instantiation_state.custom_value = True
+        robot_instantiation_failed_state = MonitoredState()
+
+        # Params
+        params_robot_end_state = State.Parameters()
+        params_robot_end_state.terminal = True
+        robot_end_state = MonitoredState(params_robot_end_state)
+        
+        robot_integrity_state = MonitoredState()
+        robot_integrity_state.custom_value = True
+        robot_integrity_failed_state = MonitoredState()
+        robot_integrity_succeeded_state = MonitoredState()
+        robot_shut_down_state = MonitoredState()
+
+        '''ROBOT INSTANTIATION STATE'''
+        
+        def print__instantiation():
+            print("INSTANTIATION")
+        
+        c_robot_instantiation_0 = StateValueCondition(True, robot_instantiation_state)
+        c_robot_instantiation_1 = StateValueCondition(False, robot_instantiation_state)
+        t_robot_instantiation_0 = ConditionalTransition(c_robot_instantiation_0)
+        t_robot_instantiation_1 = ConditionalTransition(c_robot_instantiation_1)
+        t_robot_instantiation_0.next_state = robot_integrity_state
+        t_robot_instantiation_1.next_state = robot_instantiation_failed_state
+        robot_instantiation_state.add_transition(t_robot_instantiation_0)
+        robot_instantiation_state.add_transition(t_robot_instantiation_1)
+        robot_instantiation_state.add_entering_action(print__instantiation)
+
+
+        '''ROBOT INSTANTIATION FAILED STATE'''
+
+        def print_error_msg_instantiation():
+            print("INSTANTIATION FAILED")
+
+        c_robot_instantiation_failed = AlwaysTrueCondition()
+        t_robot_instantiation_failed = ConditionalTransition(c_robot_instantiation_failed)
+        t_robot_instantiation_failed.next_state = robot_end_state
+        robot_instantiation_failed_state.add_transition(t_robot_instantiation_failed)
+        robot_instantiation_failed_state.add_entering_action(print_error_msg_instantiation)
+
+        '''ROBOT END STATE'''
+
+        def print_msg_end_state():
+            print("ENDDING - TERMINAL STATE")
+
+        robot_end_state.add_entering_action(print_msg_end_state)
+
+        '''ROBOT INTEGRITY STATE'''
+        c_robot_integrity_0 = StateValueCondition(True, robot_integrity_state)
+        c_robot_integrity_1 = StateValueCondition(False, robot_integrity_state)
+        t_robot_integrity_0 = ConditionalTransition(c_robot_integrity_0)
+        t_robot_integrity_1 = ConditionalTransition(c_robot_integrity_1)
+        t_robot_integrity_0.next_state = robot_integrity_succeeded_state
+        t_robot_integrity_1.next_state = robot_integrity_failed_state
+        robot_integrity_state.add_transition(t_robot_integrity_0)
+        robot_integrity_state.add_transition(t_robot_integrity_1)
+
+        '''ROBOT INTEGRITY FAILED'''
+
+        def print_integrity_failed_msg():
+            print("INTEGRITY FAILED")
+
+        c_robot_integrity_failed = StateEntryDurationCondition(5.0, robot_integrity_failed_state)
+        t_robot_integrity_failed = ConditionalTransition(c_robot_integrity_failed)
+        t_robot_integrity_failed.next_state = robot_shut_down_state
+        robot_integrity_failed_state.add_transition(t_robot_integrity_failed)
+        robot_integrity_failed_state.add_entering_action(print_integrity_failed_msg)
+        # clignote ici
+
+
+        '''ROBOT SHUTDOWN STATE'''
+
+        def print_shut_down_msg():
+            print("SHUTTING DOWN")
+
+        c_robot_shut_down = StateEntryDurationCondition(3.0, robot_shut_down_state)
+        t_robot_shut_down = ConditionalTransition(c_robot_shut_down)
+        t_robot_shut_down.next_state = robot_end_state
+        robot_shut_down_state.add_transition(t_robot_shut_down)
+        robot_shut_down_state.add_entering_action(print_shut_down_msg)
+        # clignote ici
+
+        '''ROBOT INTEGRITY SUCCEEDED STATE'''
+
+        def print_integrity_succeeded_msg():
+            print("INTEGRITY SUCCEEDED")
+
+        c_robot_integrity_succeeded = StateEntryDurationCondition(3.0, robot_integrity_succeeded_state)
+        t_robot_integrity_succeeded = ConditionalTransition(c_robot_integrity_succeeded)
+        t_robot_integrity_succeeded.next_state = home_state
+        robot_integrity_succeeded_state.add_transition(t_robot_integrity_succeeded)
+        robot_integrity_succeeded_state.add_entering_action(print_integrity_succeeded_msg)
+        # clignote ici
+
+        
         ''' HOME '''
+        def print_home_state():
+            print("home state")
+            
         home_state.custom_value = ""
         home_condition_0 = RemoteControlCondition("", "1", self.robot)
         home_transition_0 = RemoteControlTransition()
         home_transition_0.condition = home_condition_0
         home_transition_0.next_state = manual_control_state
         home_state.add_transition(home_transition_0)
+        home_state.add_entering_action(print_home_state) # a effacer
 
-        
+
         ''' MANUAL CONTROL '''
         def gyrophare_tache_1():
             self.robot.eyeBlinkers.blink1(SideBlinker.Side.LEFT_RECIPROCAL, cycle_duration=1.0, percent_on= 0.5, begin_on = True)
@@ -165,16 +242,26 @@ class C64Projet1(FiniteStateMachine):
         manual_control_state.add_exiting_action(self.robot.robot.stop)
         manual_control_state.add_exiting_action(gyrophare_turn_off_both)
         
+
         ''' LAYOUT '''
-        self.layout = FiniteStateMachine.Layout([home_state, manual_control_state], home_state)
+        self.layout = FiniteStateMachine.Layout(
+            [robot_instantiation_state, 
+             robot_instantiation_failed_state, 
+             robot_end_state, 
+             robot_integrity_state, 
+             robot_integrity_failed_state, 
+             robot_integrity_succeeded_state, 
+             robot_shut_down_state,
+             home_state, 
+             manual_control_state], robot_instantiation_state)
+
         super().__init__(self.layout)
     
     def track(self) -> bool:
         self.robot.ledBlinkers.track()
         self.robot.eyeBlinkers.track()
 
-        
 #         longuest_string = 20 # longueur arbitraire, ne sert que pour l'affichage
 #         print(f'\r{self.robot.ledBlinkers.is_on(SideBlinker.Side.LEFT)}', sep='', end=' ' * longuest_string)
 #         self.eyesBlinker.track()
-        return super().track()  
+        return super().track()
