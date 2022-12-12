@@ -1,16 +1,14 @@
-# Projet du cours C64
+# Rapport sur le projet #1 du cours C64
 
-## Rapport
-
-### Membres de l'équipe
+## Membres de l'équipe
 + Nicolas Charbonneau
 + Pierre Long Nguyen
 
-### À propos de la librairie FiniteStateMachine
+## À propos de la librairie FiniteStateMachine
 
-#### Pourcentage estimé de la proximité entre la réalisation et la conception donnée : **95%**
+### Pourcentage estimé de la proximité entre la réalisation et la conception donnée : **95%**
 
-#### Éléments réalisés autrement :
+### Éléments réalisés autrement :
 + ...
     - ...
 + ...
@@ -18,7 +16,7 @@
 + ...
     - ...
     
-### Description de l'infrastructure
+## Description de l'infrastructure
 + Classe représentant le robot :
     - Validation de l'intégrité du robot : ...
     - Gestion de la télécommande : ...
